@@ -8,19 +8,31 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+import { AuthProvider } from "./contexts/AuthContext";
+import Auth from "./pages/Auth";
+import NewSession from "./pages/NewSession";
+import JoinSession from "./pages/JoinSession";
+import SessionView from "./pages/SessionView";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/new" element={<NewSession />} />
+            <Route path="/s/:code" element={<JoinSession />} />
+            <Route path="/session/:id" element={<SessionView />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
