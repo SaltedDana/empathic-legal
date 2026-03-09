@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { HeartHandshake, Mail } from "lucide-react";
+import { HeartHandshake, Mail, Phone } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -18,6 +18,7 @@ const Auth = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Redirect if already logged in
   if (user) {
     navigate("/");
     return null;
@@ -34,14 +35,14 @@ const Auth = () => {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast({ title: "בדקו את האימייל", description: "שלחנו לכם קישור אימות." });
+        toast({ title: "Check your email", description: "We sent you a confirmation link." });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         navigate("/");
       }
     } catch (error: any) {
-      toast({ title: "שגיאה", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +54,7 @@ const Auth = () => {
         <div className="container mx-auto px-4 h-16 flex items-center">
           <Link to="/" className="font-serif text-2xl font-bold flex items-center gap-2 text-primary">
             <HeartHandshake className="h-6 w-6" />
-            גשר אמפתיה משפטי
+            Legal Empathy Bridge
           </Link>
         </div>
       </header>
@@ -61,9 +62,9 @@ const Auth = () => {
       <main className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-serif">{isSignUp ? "יצירת חשבון" : "התחברות"}</CardTitle>
+            <CardTitle className="text-2xl font-serif">{isSignUp ? "Create Account" : "Sign In"}</CardTitle>
             <CardDescription>
-              {isSignUp ? "הירשמו כדי לשמור את היסטוריית ההפעלות" : "גישה להפעלות השמורות שלכם"}
+              {isSignUp ? "Sign up to save your session history" : "Access your saved sessions"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -71,7 +72,7 @@ const Auth = () => {
               <div className="space-y-2">
                 <Input
                   type="email"
-                  placeholder="כתובת אימייל"
+                  placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -80,7 +81,7 @@ const Auth = () => {
               <div className="space-y-2">
                 <Input
                   type="password"
-                  placeholder="סיסמה"
+                  placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -88,17 +89,17 @@ const Auth = () => {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                <Mail className="ml-2 h-4 w-4" />
-                {isLoading ? "טוען..." : isSignUp ? "הרשמה" : "התחברות"}
+                <Mail className="mr-2 h-4 w-4" />
+                {isLoading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
               </Button>
             </form>
 
             <Separator />
 
             <p className="text-center text-sm text-muted-foreground">
-              {isSignUp ? "כבר יש לכם חשבון?" : "אין לכם חשבון?"}{" "}
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
               <button onClick={() => setIsSignUp(!isSignUp)} className="text-primary underline">
-                {isSignUp ? "התחברות" : "הרשמה"}
+                {isSignUp ? "Sign In" : "Sign Up"}
               </button>
             </p>
           </CardContent>

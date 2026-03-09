@@ -6,12 +6,12 @@ export const AutoSaveIndicator = ({ isSaving }: { isSaving: boolean }) => {
       {isSaving ? (
         <>
           <Loader2 className="h-3 w-3 animate-spin" />
-          <span>שומר...</span>
+          <span>Saving...</span>
         </>
       ) : (
         <>
           <CheckCircle2 className="h-3 w-3" />
-          <span>נשמר</span>
+          <span>Saved</span>
         </>
       )}
     </div>

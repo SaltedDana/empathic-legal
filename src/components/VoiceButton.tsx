@@ -25,7 +25,7 @@ export const VoiceButton = ({
         className
       )}
       onClick={toggleListening}
-      title={isListening ? "הפסקת האזנה" : "התחלת קלט קולי"}
+      title={isListening ? "Stop listening" : "Start voice input"}
     >
       {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
     </Button>
