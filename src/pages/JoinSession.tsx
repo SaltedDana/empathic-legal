@@ -46,7 +46,7 @@ const JoinSession = () => {
         .single();
 
       if (error || !data) {
-        toast({ title: "Session not found", description: "This link may be invalid.", variant: "destructive" });
+        toast({ title: "הפעלה לא נמצאה", description: "הקישור הזה עשוי להיות לא תקין.", variant: "destructive" });
         navigate("/");
         return;
       }
@@ -66,7 +66,7 @@ const JoinSession = () => {
 
   const handleSubmit = async () => {
     if (!user) {
-      toast({ title: "Sign in required", description: "Please sign in to submit your response.", variant: "destructive" });
+      toast({ title: "נדרשת התחברות", description: "אנא התחברו כדי לשלוח את התגובה שלכם.", variant: "destructive" });
       navigate("/auth");
       return;
     }
@@ -90,17 +90,16 @@ const JoinSession = () => {
 
       if (responseError) throw responseError;
 
-      // Update session status
       await supabase
         .from("sessions")
         .update({ status: "both_submitted" })
         .eq("id", session.id);
 
       localStorage.removeItem(`join-session-${code}`);
-      toast({ title: "Submitted!", description: "Both parties have now submitted. Generating analysis..." });
+      toast({ title: "נשלח!", description: "שני הצדדים שלחו. מייצר ניתוח..." });
       navigate(`/session/${session.id}`);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "שגיאה", description: error.message, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -120,7 +119,7 @@ const JoinSession = () => {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="font-serif text-2xl font-bold flex items-center gap-2 text-primary">
             <HeartHandshake className="h-6 w-6" />
-            Legal Empathy Bridge
+            גשר אמפתיה משפטי
           </Link>
           <AutoSaveIndicator isSaving={isSaving} />
         </div>
@@ -129,8 +128,8 @@ const JoinSession = () => {
       <main className="container mx-auto px-4 py-8 max-w-2xl space-y-6">
         <Card className="bg-secondary/30">
           <CardHeader>
-            <CardTitle className="text-xl font-serif">Agreement Context</CardTitle>
-            <CardDescription>The other party described this agreement as:</CardDescription>
+            <CardTitle className="text-xl font-serif">הקשר ההסכם</CardTitle>
+            <CardDescription>הצד השני תיאר את ההסכם כך:</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-foreground whitespace-pre-wrap">{session?.context}</p>
@@ -141,62 +140,62 @@ const JoinSession = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-serif">Your Concerns</CardTitle>
-            <CardDescription>What are you worried might go wrong?</CardDescription>
+            <CardTitle className="text-xl font-serif">החששות שלכם</CardTitle>
+            <CardDescription>ממה אתם חוששים שעלול להשתבש?</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="relative">
               <Textarea
-                placeholder="What keeps you up at night about this agreement?"
+                placeholder="מה מדאיג אתכם לגבי ההסכם הזה?"
                 className="min-h-[120px]"
                 value={formData.concerns}
                 onChange={(e) => updateField("concerns", e.target.value)}
               />
-              <VoiceButton onResult={(text) => appendToField("concerns", text)} className="absolute bottom-3 right-3" />
+              <VoiceButton onResult={(text) => appendToField("concerns", text)} className="absolute bottom-3 left-3" />
             </div>
             <div className="relative">
-              <label className="text-sm font-medium mb-2 block">What do you want to protect yourself from?</label>
+              <label className="text-sm font-medium mb-2 block">ממה אתם רוצים להגן על עצמכם?</label>
               <Textarea
-                placeholder="Specific protections you want..."
+                placeholder="הגנות ספציפיות שאתם רוצים..."
                 className="min-h-[120px]"
                 value={formData.protections}
                 onChange={(e) => updateField("protections", e.target.value)}
               />
-              <VoiceButton onResult={(text) => appendToField("protections", text)} className="absolute bottom-3 right-3" />
+              <VoiceButton onResult={(text) => appendToField("protections", text)} className="absolute bottom-3 left-3" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-serif">Your Priorities</CardTitle>
-            <CardDescription>What matters most to you?</CardDescription>
+            <CardTitle className="text-xl font-serif">העדיפויות שלכם</CardTitle>
+            <CardDescription>מה הכי חשוב לכם?</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="relative">
               <Textarea
-                placeholder="Your top priorities and non-negotiables..."
+                placeholder="העדיפויות העליונות והדברים שאינם ניתנים למשא ומתן..."
                 className="min-h-[120px]"
                 value={formData.priorities}
                 onChange={(e) => updateField("priorities", e.target.value)}
               />
-              <VoiceButton onResult={(text) => appendToField("priorities", text)} className="absolute bottom-3 right-3" />
+              <VoiceButton onResult={(text) => appendToField("priorities", text)} className="absolute bottom-3 left-3" />
             </div>
             <div className="relative">
-              <label className="text-sm font-medium mb-2 block">What outcomes are you hoping for?</label>
+              <label className="text-sm font-medium mb-2 block">לאילו תוצאות אתם מקווים?</label>
               <Textarea
-                placeholder="Your ideal outcomes..."
+                placeholder="התוצאות האידיאליות שלכם..."
                 className="min-h-[120px]"
                 value={formData.desired_outcomes}
                 onChange={(e) => updateField("desired_outcomes", e.target.value)}
               />
-              <VoiceButton onResult={(text) => appendToField("desired_outcomes", text)} className="absolute bottom-3 right-3" />
+              <VoiceButton onResult={(text) => appendToField("desired_outcomes", text)} className="absolute bottom-3 left-3" />
             </div>
           </CardContent>
         </Card>
 
         <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full h-12 text-lg">
-          {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Submit My Response"}
+          {isSubmitting ? <><Loader2 className="ml-2 h-4 w-4 animate-spin" />שולח...</> : "שליחת התגובה שלי"}
         </Button>
       </main>
     </div>

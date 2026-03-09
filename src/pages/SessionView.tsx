@@ -20,7 +20,6 @@ const SessionView = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
-
       const { data: sessionData } = await supabase
         .from("sessions")
         .select("*")
@@ -29,17 +28,13 @@ const SessionView = () => {
 
       if (sessionData) {
         setSession(sessionData);
-
-        // Check for existing analysis
         const { data: analysisData } = await supabase
           .from("ai_analyses")
           .select("*")
           .eq("session_id", id)
           .single();
 
-        if (analysisData) {
-          setAnalysis(analysisData);
-        }
+        if (analysisData) setAnalysis(analysisData);
       }
       setIsLoading(false);
     };
@@ -53,13 +48,12 @@ const SessionView = () => {
       const { data, error } = await supabase.functions.invoke("analyze-session", {
         body: { session_id: id },
       });
-
       if (error) throw error;
       setAnalysis(data);
       setSession((prev: any) => ({ ...prev, status: "analyzed" }));
-      toast({ title: "Analysis complete!", description: "The empathic summary is ready." });
+      toast({ title: "הניתוח הושלם!", description: "הסיכום האמפתי מוכן." });
     } catch (error: any) {
-      toast({ title: "Analysis failed", description: error.message, variant: "destructive" });
+      toast({ title: "הניתוח נכשל", description: error.message, variant: "destructive" });
     } finally {
       setIsAnalyzing(false);
     }
@@ -71,7 +65,7 @@ const SessionView = () => {
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast({ title: "Link copied!", description: link });
+    toast({ title: "הקישור הועתק!", description: link });
   };
 
   if (isLoading) {
@@ -92,24 +86,23 @@ const SessionView = () => {
         <div className="container mx-auto px-4 h-16 flex items-center">
           <Link to="/" className="font-serif text-2xl font-bold flex items-center gap-2 text-primary">
             <HeartHandshake className="h-6 w-6" />
-            Legal Empathy Bridge
+            גשר אמפתיה משפטי
           </Link>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
-        {/* Waiting state */}
         {isWaiting && (
           <Card className="text-center">
             <CardHeader>
-              <CardTitle className="text-2xl font-serif">Waiting for the other party</CardTitle>
+              <CardTitle className="text-2xl font-serif">ממתינים לצד השני</CardTitle>
               <CardDescription>
-                Share this link with the other party so they can submit their perspective.
+                שתפו את הקישור הזה עם הצד השני כדי שיוכלו לשלוח את נקודת המבט שלהם.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-secondary rounded-lg p-4 flex items-center justify-between gap-2">
-                <code className="text-sm font-mono flex-1 text-left truncate">
+                <code className="text-sm font-mono flex-1 text-right truncate">
                   {window.location.origin}/s/{session?.short_code}
                 </code>
                 <Button variant="outline" size="sm" onClick={copyShareLink}>
@@ -117,38 +110,36 @@ const SessionView = () => {
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">
-                You'll be able to view the AI analysis once both parties have submitted.
+                תוכלו לצפות בניתוח ה-AI לאחר ששני הצדדים ישלחו.
               </p>
             </CardContent>
           </Card>
         )}
 
-        {/* Both submitted - trigger analysis */}
         {isBothSubmitted && !analysis && (
           <Card className="text-center">
             <CardHeader>
-              <CardTitle className="text-2xl font-serif">Both parties have submitted!</CardTitle>
-              <CardDescription>Ready to generate the empathic analysis.</CardDescription>
+              <CardTitle className="text-2xl font-serif">שני הצדדים שלחו!</CardTitle>
+              <CardDescription>מוכנים לייצר את הניתוח האמפתי.</CardDescription>
             </CardHeader>
             <CardContent>
               <Button onClick={triggerAnalysis} disabled={isAnalyzing} size="lg">
                 {isAnalyzing ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Analyzing...</>
+                  <><Loader2 className="ml-2 h-4 w-4 animate-spin" />מנתח...</>
                 ) : (
-                  "Generate Empathic Analysis"
+                  "ייצור ניתוח אמפתי"
                 )}
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Results */}
         {isAnalyzed && (
           <>
             <div className="text-center space-y-2 mb-8">
-              <h1 className="text-3xl font-serif font-bold">Empathic Analysis</h1>
+              <h1 className="text-3xl font-serif font-bold">ניתוח אמפתי</h1>
               <p className="text-muted-foreground text-sm">
-                This summary represents both perspectives in neutral language. Your specific words remain private.
+                סיכום זה מייצג את שתי נקודות המבט בשפה ניטרלית. המילים הספציפיות שלכם נשארות פרטיות.
               </p>
             </div>
 
@@ -156,7 +147,7 @@ const SessionView = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl font-serif">
                   <HeartHandshake className="h-5 w-5 text-primary" />
-                  Empathic Summary
+                  סיכום אמפתי
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -169,13 +160,13 @@ const SessionView = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl font-serif">
                     <Scale className="h-5 w-5 text-primary" />
-                    Relevant Legal Concepts
+                    מושגים משפטיים רלוונטיים
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {(analysis.legal_concepts as any[]).map((concept: any, i: number) => (
-                      <div key={i} className="border-l-2 border-primary/30 pl-4">
+                      <div key={i} className="border-r-2 border-primary/30 pr-4">
                         <h4 className="font-semibold">{concept.concept}</h4>
                         <p className="text-muted-foreground text-sm mt-1">{concept.explanation}</p>
                       </div>
@@ -190,7 +181,7 @@ const SessionView = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl font-serif">
                     <Lightbulb className="h-5 w-5 text-primary" />
-                    Bridge Building Suggestions
+                    הצעות לגישור
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -210,10 +201,10 @@ const SessionView = () => {
 
             <div className="flex gap-4">
               <Button variant="outline" className="flex-1" asChild>
-                <Link to="/new">Start New Agreement</Link>
+                <Link to="/new">התחלת הסכם חדש</Link>
               </Button>
               <Button variant="outline" className="flex-1" asChild>
-                <Link to="/">Home</Link>
+                <Link to="/">דף הבית</Link>
               </Button>
             </div>
           </>
