@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UX Text Comparison — BridgeClause vs. Legal Empathy Bridge</title>
+  <style>
+    :root {
+      --bc:   #4A6FA5;
+      --bc-lt: #EEF4FC;
+      --leb:  #B45309;
+      --leb-lt: #FEF3C7;
+      --border: #E5E7EB;
+      --row-alt: #F9FAFB;
+      --text: #111827;
+      --muted: #6B7280;
+      --section-bg: #1E293B;
+      --section-text: #F1F5F9;
+      --win-bc: #D1FAE5;
+      --win-leb: #FEE2E2;
+      --win-both: #EDE9FE;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #F8FAFC;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .page-header {
+      background: var(--section-bg);
+      color: var(--section-text);
+      padding: 36px 40px 28px;
+      border-bottom: 4px solid #334155;
+    }
+
+    .page-header h1 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .page-header p {
+      font-size: .88rem;
+      color: #94A3B8;
+      max-width: 640px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 24px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .8rem;
+      color: #CBD5E1;
+    }
+
+    .legend-dot {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .wrap {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 4px 20px rgba(0,0,0,.05);
+    }
+
+    /* Section header rows */
+    tr.section-row td {
+      background: var(--section-bg);
+      color: var(--section-text);
+      font-weight: 700;
+      font-size: .78rem;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      padding: 11px 20px;
+      border: none;
+    }
+
+    /* Column headers */
+    thead th {
+      padding: 14px 20px;
+      text-align: left;
+      font-size: .8rem;
+      font-weight: 700;
+      border-bottom: 2px solid var(--border);
+    }
+
+    th.col-label  { color: var(--muted); width: 16%; background: #fff; }
+    th.col-bc     { color: var(--bc); background: var(--bc-lt); width: 34%; }
+    th.col-leb-en { color: var(--leb); background: var(--leb-lt); width: 25%; }
+    th.col-leb-he { color: var(--leb); background: var(--leb-lt); width: 25%; }
+
+    /* Data rows */
+    tbody tr td {
+      padding: 13px 20px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:not(.section-row):nth-child(even) td {
+      background: var(--row-alt);
+    }
+    tbody tr:not(.section-row):nth-child(odd) td {
+      background: #fff;
+    }
+
+    /* override section rows so they always show correctly */
+    tbody tr.section-row td {
+      background: var(--section-bg) !important;
+    }
+
+    td.label-cell {
+      font-size: .76rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    td.bc-cell {
+      color: #1E3A5F;
+    }
+
+    td.leb-en-cell, td.leb-he-cell {
+      color: #451A03;
+    }
+
+    td.leb-he-cell {
+      direction: rtl;
+      text-align: right;
+      font-size: .88rem;
+    }
+
+    /* Tone/quality badges */
+    .tag {
+      display: inline-block;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-top: 5px;
+    }
+
+    .tag-warm    { background: #FEF3C7; color: #92400E; }
+    .tag-clinical { background: #E0E7FF; color: #3730A3; }
+    .tag-missing  { background: #F3F4F6; color: #9CA3AF; font-style: italic; font-weight: 400; }
+    .tag-strong   { background: #D1FAE5; color: #065F46; }
+    .tag-generic  { background: #FEE2E2; color: #991B1B; }
+
+    .empty {
+      color: #9CA3AF;
+      font-style: italic;
+      font-size: .82rem;
+    }
+
+    /* Highlight rows */
+    tr.highlight-bc td.bc-cell       { background: #D1FAE5 !important; }
+    tr.highlight-leb td.leb-en-cell,
+    tr.highlight-leb td.leb-he-cell  { background: #D1FAE5 !important; }
+    tr.highlight-diff td.bc-cell     { background: #FEF9C3 !important; }
+    tr.highlight-diff td.leb-en-cell,
+    tr.highlight-diff td.leb-he-cell { background: #FEE2E2 !important; }
+
+    .note {
+      margin-top: 24px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px 24px;
+      border: 1px solid var(--border);
+      font-size: .85rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .note strong { color: var(--text); }
+
+    h2.section-title {
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 32px 0 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>UX Text Comparison — BridgeClause vs. Legal Empathy Bridge</h1>
+  <p>Side-by-side comparison of every user-facing string across both products, organized by screen. Goal: identify which copy to keep, merge, or rewrite for the unified product.</p>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#D1FAE5"></div> Stronger copy</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FEE2E2"></div> Weaker / generic copy</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FEF9C3"></div> Unique / no equivalent</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F3F4F6; border:1px solid #D1D5DB"></div> Missing / not present</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <table>
+    <thead>
+      <tr>
+        <th class="col-label">Screen / Element</th>
+        <th class="col-bc">🌉 BridgeClause</th>
+        <th class="col-leb-en">⚖️ Legal Empathy Bridge (EN)</th>
+        <th class="col-leb-he">⚖️ Legal Empathy Bridge (HE)</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- ══ APP IDENTITY ══ -->
+      <tr class="section-row"><td colspan="4">APP IDENTITY</td></tr>
+
+      <tr class="highlight-diff">
+        <td class="label-cell">App Name</td>
+        <td class="bc-cell">BridgeClause<br><span class="tag tag-warm">Evocative, memorable</span></td>
+        <td class="leb-en-cell">Legal Empathy Bridge<br><span class="tag tag-clinical">Descriptive, functional</span></td>
+        <td class="leb-he-cell">Legal Empathy Bridge<br><span class="tag tag-clinical">שם באנגלית — לא תורגם</span></td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Tagline / Hero headline</td>
+        <td class="bc-cell">"Find common ground before you sign"<br><span class="tag tag-warm">Warm, action-oriented</span></td>
+        <td class="leb-en-cell">"Reach <em>agreements</em> without confrontation"<br><span class="tag tag-clinical">Functional, slightly cold</span></td>
+        <td class="leb-he-cell">"להגיע ל<em>הסכמות</em> ללא עימות"<br><span class="tag tag-clinical">תרגום מילולי, לא אורגני</span></td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Hero subtitle</td>
+        <td class="bc-cell">"Share what you actually care about — privately — and let the app translate both sides into something you can both hear."<br><span class="tag tag-warm">Personal, explains the magic</span></td>
+        <td class="leb-en-cell">"A two-party agreement tool where you privately share your concerns. Our AI translates them into empathic language and suggests relevant legal protections for both sides."<br><span class="tag tag-clinical">Accurate but reads like a product description</span></td>
+        <td class="leb-he-cell">"כלי להסכמות דו-צדדיות שבו משתפים את החששות בפרטיות. ה-AI מתרגם אותם לשפה אמפתית ומציע הגנות משפטיות רלוונטיות לשני הצדדים."<br><span class="tag tag-clinical">תרגום מכני, רוח קרה</span></td>
+      </tr>
+
+      <tr>
+        <td class="label-cell">Primary CTA (homepage)</td>
+        <td class="bc-cell">"Share my perspective →"<br><span class="tag tag-warm">Personal, inviting</span></td>
+        <td class="leb-en-cell">"Start New Agreement"<br><span class="tag tag-generic">Generic SaaS</span></td>
+        <td class="leb-he-cell">"התחלת הסכם חדש"<br><span class="tag tag-generic">גנרי</span></td>
+      </tr>
+
+      <!-- ══ HOW IT WORKS / FEATURES ══ -->
+      <tr class="section-row"><td colspan="4">HOW IT WORKS — 3 FEATURE PILLARS</td></tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Pillar 1 — Title</td>
+        <td class="bc-cell">"Private first"</td>
+        <td class="leb-en-cell">"1. Share Privately"</td>
+        <td class="leb-he-cell">"1. שיתוף בפרטיות"</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Pillar 1 — Body</td>
+        <td class="bc-cell">"Each party shares their fears and hopes separately. Neither side sees the other's raw answers — only the interpreted, empathic summary."<br><span class="tag tag-warm">Explains the privacy promise with specificity</span></td>
+        <td class="leb-en-cell">"Express your fears, needs, and priorities safely. Your exact words are never shown to the other party."<br><span class="tag tag-clinical">Shorter, accurate but less compelling</span></td>
+        <td class="leb-he-cell">"לבטא פחדים, צרכים ועדיפויות בבטחה. המילים המדויקות לעולם לא יוצגו לצד השני."</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Pillar 2 — Title</td>
+        <td class="bc-cell">"Empathy before legal"<br><span class="tag tag-warm">Sets the philosophy</span></td>
+        <td class="leb-en-cell">"2. AI Translation"<br><span class="tag tag-generic">Technocratic, loses the empathy angle</span></td>
+        <td class="leb-he-cell">"2. תרגום AI"<br><span class="tag tag-generic">טכנוקרטי</span></td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Pillar 2 — Body</td>
+        <td class="bc-cell">"Your concerns get translated into human language the other side can actually hear without getting defensive."<br><span class="tag tag-warm">Paints the real problem being solved</span></td>
+        <td class="leb-en-cell">"Our AI analyzes both sides and creates a neutral, empathic summary that validates both perspectives."<br><span class="tag tag-clinical">Describes the mechanism, not the feeling</span></td>
+        <td class="leb-he-cell">"ה-AI מנתח את שני הצדדים ויוצר סיכום ניטרלי ואמפתי המאמת את שתי הפרספקטיבות."</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Pillar 3 — Title</td>
+        <td class="bc-cell">"Legal provisions, made human"<br><span class="tag tag-warm">Reframes legal as accessible</span></td>
+        <td class="leb-en-cell">"3. Legal Concepts"<br><span class="tag tag-generic">Dry, intimidating</span></td>
+        <td class="leb-he-cell">"3. מושגים משפטיים"<br><span class="tag tag-generic">יבש</span></td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Pillar 3 — Body</td>
+        <td class="bc-cell">"Suggests relevant clauses based on both sides' actual concerns — not generic boilerplate."<br><span class="tag tag-warm">Addresses the fear of irrelevant legal advice</span></td>
+        <td class="leb-en-cell">"Get suggested clauses and protections to include in your final contract to address everyone's needs."<br><span class="tag tag-clinical">Functional but generic</span></td>
+        <td class="leb-he-cell">"ניתן לקבל סעיפים והגנות מוצעות לכלול בחוזה הסופי שיתייחסו לצרכי כולם."</td>
+      </tr>
+
+      <!-- ══ PARTY A — CONTEXT SCREEN ══ -->
+      <tr class="section-row"><td colspan="4">PARTY A — STEP 1: CONTEXT / DESCRIBE AGREEMENT</td></tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Screen heading</td>
+        <td class="bc-cell">"The bigger picture"<br><span class="tag tag-warm">Evocative, positions the task</span></td>
+        <td class="leb-en-cell">"Describe the Agreement"<br><span class="tag tag-generic">Generic form label</span></td>
+        <td class="leb-he-cell">"תיאור ההסכם"</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Screen subtitle</td>
+        <td class="bc-cell">"Describe the situation in your own words — the other party will describe it in theirs."<br><span class="tag tag-warm">Sets up the bilateral structure immediately</span></td>
+        <td class="leb-en-cell">"What kind of agreement is this? What are you trying to accomplish together?"<br><span class="tag tag-clinical">Question-form, loses the bilateral framing</span></td>
+        <td class="leb-he-cell">"מה סוג ההסכם הזה? מה מנסים להשיג יחד?"</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Name field label</td>
+        <td class="bc-cell">"Your first name" — placeholder: "e.g. Dana"<br><span class="tag tag-warm">Personal, humanizes from the start</span></td>
+        <td class="leb-en-cell"><span class="empty">— Not present (uses auth profile instead)</span></td>
+        <td class="leb-he-cell"><span class="empty">— לא קיים</span></td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Agreement topic field</td>
+        <td class="bc-cell">Label: "What is this agreement about?"<br>Hint: <em>"e.g. 'Hiring a contractor to deliver training for my clients', 'Renting out my apartment'"</em><br><span class="tag tag-warm">Rich, relatable examples</span></td>
+        <td class="leb-en-cell">Placeholder only: <em>"For example: We're starting a business partnership and need to define roles, equity split, and exit terms…"</em><br><span class="tag tag-clinical">Single example, more formal</span></td>
+        <td class="leb-he-cell">"לדוגמה: מתחילים שותפות עסקית וצריך להגדיר תפקידים, חלוקת הון ותנאי יציאה..."</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Role field</td>
+        <td class="bc-cell">Label: "How would you describe yourself in this agreement?"<br>Hint: <em>"e.g. 'I run a training business and I'm bringing someone in to deliver my content'"</em><br><span class="tag tag-warm">First-person examples lower the bar to answer</span></td>
+        <td class="leb-en-cell"><span class="empty">— Not present</span></td>
+        <td class="leb-he-cell"><span class="empty">— לא קיים</span></td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Relationship selector</td>
+        <td class="bc-cell">Dropdown: "We just met", "We've met a few times and seem to align", "I generally trust them but want proper structure", "We know each other well"<br><span class="tag tag-warm">Nuanced, emotionally-resonant options</span></td>
+        <td class="leb-en-cell"><span class="empty">— Not present</span></td>
+        <td class="leb-he-cell"><span class="empty">— לא קיים</span></td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Background context field</td>
+        <td class="bc-cell">Label: "Any background context?" (optional)<br>Placeholder: "Relevant history, how you connected, anything that frames this agreement…"</td>
+        <td class="leb-en-cell"><span class="empty">— Not present</span></td>
+        <td class="leb-he-cell"><span class="empty">— לא קיים</span></td>
+      </tr>
+
+      <!-- ══ PARTY A — FEELINGS SCREEN ══ -->
+      <tr class="section-row"><td colspan="4">PARTY A — STEP 2: PRIVATE FEELINGS / CONCERNS</td></tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Screen heading</td>
+        <td class="bc-cell">"Your concerns, in your own words"<br><span class="tag tag-warm">Inviting, non-clinical</span></td>
+        <td class="leb-en-cell">"Your Concerns"<br><span class="tag tag-generic">Flat label</span></td>
+        <td class="leb-he-cell">"חששות"<br><span class="tag tag-generic">מאוד יבש</span></td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Screen subtitle</td>
+        <td class="bc-cell">"This stays between you and the app until the other party has shared too. No legal language needed — just honest feelings."<br><span class="tag tag-warm">Reassures, lowers the guard</span></td>
+        <td class="leb-en-cell"><span class="empty">— No subtitle</span></td>
+        <td class="leb-he-cell"><span class="empty">— אין</span></td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Worries field</td>
+        <td class="bc-cell">Label: "What worries you most about this agreement?"<br>Hint: "What could go wrong? What keeps you up at night about this?"<br>Placeholder: <em>"e.g. I'm worried they'll use my work to build something bigger and then cut me out once it's profitable…"</em><br><span class="tag tag-warm">The hint + placeholder combo is exceptional — tells a real story</span></td>
+        <td class="leb-en-cell">Label: "What are you worried might go wrong?"<br>Placeholder: "What keeps you up at night about this agreement?"<br><span class="tag tag-clinical">Only one example prompt, no story</span></td>
+        <td class="leb-he-cell">"ממה חוששים שעלול להשתבש?" / "מה מדאיג לגבי ההסכם הזה?"</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Safety/protection field</td>
+        <td class="bc-cell">Label: "What do you need to feel safe and protected?"<br>Hint: "What would make this feel truly fair to you?"<br>Placeholder: <em>"e.g. I need to know I'll be compensated even if the project is cancelled halfway through…"</em><br><span class="tag tag-warm">"Feel safe" framing is emotional, not transactional</span></td>
+        <td class="leb-en-cell">Label: "What do you want to protect yourself from?"<br>Placeholder: "Specific protections you want in this agreement…"<br><span class="tag tag-generic">Defensive framing vs. BridgeClause's safety-seeking framing</span></td>
+        <td class="leb-he-cell">"ממה חשוב להגן?" / "הגנות ספציפיות הרצויות בהסכם זה..."</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Ideal outcome field</td>
+        <td class="bc-cell">Label: "What does a great outcome look like for you?"<br>Hint: "Paint the picture of success from your side."<br>Placeholder: <em>"e.g. In two years we're still working together and both feel the arrangement was fair from the start…"</em><br><span class="tag tag-warm">Future-positive framing, rich example</span></td>
+        <td class="leb-en-cell">Label: "What outcomes are you hoping for?"<br>Placeholder: "Your ideal outcomes from this agreement…"<br><span class="tag tag-clinical">Weaker framing, no example</span></td>
+        <td class="leb-he-cell">"אילו תוצאות מקווים להשיג?" / "תוצאות אידיאליות מהסכם זה..."</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Priorities field</td>
+        <td class="bc-cell"><span class="empty">— Not a separate field (folded into context)</span></td>
+        <td class="leb-en-cell">Label: "What matters most to you in this agreement?"<br>Placeholder: "Your top priorities and non-negotiables…"<br><span class="tag tag-strong">Unique to LEB — useful for surfacing hard limits</span></td>
+        <td class="leb-he-cell">"מה הכי חשוב בהסכם זה?" / "עדיפויות עיקריות וקווים אדומים..."</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Hesitation field</td>
+        <td class="bc-cell">Label: "Anything you're hesitant to bring up directly?" (optional)<br>Hint: "Things that feel awkward, sensitive, or hard to say out loud."<br>Placeholder: <em>"e.g. I don't want to seem like I don't trust them, but I've been burned before…"</em><br><span class="tag tag-warm">Unique — unlocks the most valuable insight</span></td>
+        <td class="leb-en-cell"><span class="empty">— Not present</span></td>
+        <td class="leb-he-cell"><span class="empty">— לא קיים</span></td>
+      </tr>
+
+      <!-- ══ PRIVACY ASSURANCE ══ -->
+      <tr class="section-row"><td colspan="4">PRIVACY ASSURANCE</td></tr>
+
+      <tr class="highlight-leb">
+        <td class="label-cell">Privacy banner / notice</td>
+        <td class="bc-cell">"Neither side sees the other's raw answers — only the interpreted, empathic summary." (in feature list)<br><span class="tag tag-warm">Embedded naturally in the flow</span></td>
+        <td class="leb-en-cell"><strong>Dedicated component:</strong> "Your privacy is guaranteed. Your specific words and concerns are kept entirely private. They will not be shown to the other party. Our AI uses this information solely to create a neutral, empathic summary and suggest legal concepts."<br><span class="tag tag-strong">More explicit, builds more trust at the moment of sharing</span></td>
+        <td class="leb-he-cell">"הפרטיות מובטחת. המילים והחששות הספציפיים נשמרים בסודיות מוחלטת. הם לא יוצגו לצד השני. ה-AI משתמש במידע זה אך ורק ליצירת סיכום ניטרלי ואמפתי והצעת מושגים משפטיים."<br><span class="tag tag-strong">מרכיב ייעודי — טוב</span></td>
+      </tr>
+
+      <!-- ══ SHARING ══ -->
+      <tr class="section-row"><td colspan="4">SHARE LINK / INVITE</td></tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Confirmation heading</td>
+        <td class="bc-cell">"Your perspective has been saved"<br><span class="tag tag-warm">Validates the person's act of sharing</span></td>
+        <td class="leb-en-cell">"Session created!" + "Share code: XXXXXX"<br><span class="tag tag-generic">Technical framing</span></td>
+        <td class="leb-he-cell">"הפגשה נוצרה!" + "קוד שיתוף: XXXXXX"</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Invite instruction</td>
+        <td class="bc-cell">"Send this link to the other party. Once they add their perspective, you'll both receive a mutual empathic summary and relevant legal clause suggestions."<br><span class="tag tag-warm">Explains what happens next in human terms</span></td>
+        <td class="leb-en-cell">"Share this link with the other party so they can submit their perspective."<br><span class="tag tag-clinical">Minimal — doesn't build anticipation</span></td>
+        <td class="leb-he-cell">"יש לשתף את הקישור עם הצד השני כדי שיוכל להגיש את הפרספקטיבה שלו."</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">"What happens next" explainer</td>
+        <td class="bc-cell">"The other party follows your link, answers the same questions privately, then both of you receive the mutual understanding — including where your interests align and which legal provisions might help. Neither of you sees the other's raw answers."<br><span class="tag tag-warm">Full loop explanation, reinforces the privacy promise</span></td>
+        <td class="leb-en-cell">"You'll be able to view the AI analysis once both parties have submitted."<br><span class="tag tag-generic">Flat, doesn't tell the story</span></td>
+        <td class="leb-he-cell">"הניתוח יהיה זמין ברגע ששני הצדדים יגישו."</td>
+      </tr>
+
+      <!-- ══ PARTY B WELCOME ══ -->
+      <tr class="section-row"><td colspan="4">PARTY B — WELCOME / JOIN SCREEN</td></tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Welcome heading</td>
+        <td class="bc-cell">"[Name] has invited you to find common ground"<br><span class="tag tag-warm">Personalised with inviter's name — feels human</span></td>
+        <td class="leb-en-cell">"Agreement Context" + "The other party described this agreement as:"<br><span class="tag tag-clinical">No welcome, just context display</span></td>
+        <td class="leb-he-cell">"הקשר ההסכם" + "הצד השני תיאר את ההסכם כך:"</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Welcome subtitle / reassurance</td>
+        <td class="bc-cell">"They've shared their perspective on an agreement you're both involved in. Once you share yours — in your own words — you'll both receive a mutual empathic summary. Neither of you will see each other's raw answers."<br><span class="tag tag-warm">Explains what's in it for Party B, addresses privacy anxiety</span></td>
+        <td class="leb-en-cell"><span class="empty">— No welcome message before the form</span></td>
+        <td class="leb-he-cell"><span class="empty">— אין ברכת כניסה</span></td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Party B CTA</td>
+        <td class="bc-cell">"Share my perspective →"<br><span class="tag tag-warm">Consistent with Party A — same voice</span></td>
+        <td class="leb-en-cell">"Submit My Response"<br><span class="tag tag-generic">Transactional, no warmth</span></td>
+        <td class="leb-he-cell">"שליחת התגובה"</td>
+      </tr>
+
+      <!-- ══ LOADING ══ -->
+      <tr class="section-row"><td colspan="4">LOADING STATE (while AI processes)</td></tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Loading heading</td>
+        <td class="bc-cell">"Finding common ground…"<br><span class="tag tag-warm">Poetic — tells the story of what's happening</span></td>
+        <td class="leb-en-cell">"Analyzing…"<br><span class="tag tag-generic">Generic spinner text</span></td>
+        <td class="leb-he-cell">"מנתח..."</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Loading sub-messages (rotating)</td>
+        <td class="bc-cell">
+          "Reading both perspectives…"<br>
+          "Looking for the human behind each concern…"<br>
+          "Finding where your interests overlap…"<br>
+          "Translating fears into language you can both hear…"<br>
+          "Identifying relevant legal provisions…"<br>
+          "Almost there…"<br>
+          <span class="tag tag-warm">Rotating — each line is a small story moment</span>
+        </td>
+        <td class="leb-en-cell"><span class="empty">— No rotating messages</span></td>
+        <td class="leb-he-cell"><span class="empty">— אין</span></td>
+      </tr>
+
+      <!-- ══ RESULTS ══ -->
+      <tr class="section-row"><td colspan="4">RESULTS SCREEN</td></tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Results heading</td>
+        <td class="bc-cell">"Here's what [Name A] & [Name B] both care about"<br><span class="tag tag-warm">Personalised with both names — makes it feel made for them</span></td>
+        <td class="leb-en-cell">"Empathic Analysis"<br><span class="tag tag-generic">Section label, not a headline</span></td>
+        <td class="leb-he-cell">"ניתוח אמפתי"</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Results subtitle</td>
+        <td class="bc-cell">"A mutual understanding — written so both sides can actually hear it."<br><span class="tag tag-warm">Tells them what to expect</span></td>
+        <td class="leb-en-cell">"This summary represents both perspectives in neutral language. Your specific words remain private."<br><span class="tag tag-clinical">Accurate but reads like a legal disclaimer</span></td>
+        <td class="leb-he-cell">"סיכום זה מייצג את שתי הפרספקטיבות בשפה ניטרלית. המילים הספציפיות נשארות פרטיות."</td>
+      </tr>
+
+      <tr>
+        <td class="label-cell">Section labels (AI output)</td>
+        <td class="bc-cell">Rendered from AI markdown:<br>"Understanding [Name A]", "Understanding [Name B]", "Where You Both Want the Same Thing", "Legal Provisions Worth Considering", "Conversation Starters"<br><span class="tag tag-warm">Narrative headers, human language</span></td>
+        <td class="leb-en-cell">"Empathic Summary", "Relevant Legal Concepts", "Bridge Building Suggestions"<br><span class="tag tag-clinical">Structural / academic labels</span></td>
+        <td class="leb-he-cell">"סיכום אמפתי", "מושגים משפטיים רלוונטיים", "הצעות לגישור"</td>
+      </tr>
+
+      <tr class="highlight-bc">
+        <td class="label-cell">Next step guidance</td>
+        <td class="bc-cell">"Start with the 'Conversation Starters' — then bring the suggested provisions to a lawyer to formalize what works for both of you."<br><span class="tag tag-warm">Clear, actionable, honest about limits</span></td>
+        <td class="leb-en-cell"><span class="empty">— No next step guidance</span></td>
+        <td class="leb-he-cell"><span class="empty">— אין</span></td>
+      </tr>
+
+      <!-- ══ WAITING STATE ══ -->
+      <tr class="section-row"><td colspan="4">WAITING STATE (after Party A submits, before Party B)</td></tr>
+
+      <tr class="highlight-leb">
+        <td class="label-cell">Waiting heading</td>
+        <td class="bc-cell">"💡 Save this link — once the other party responds, they'll send you a results link you can both view."<br><span class="tag tag-clinical">Workaround notice (URL-based architecture)</span></td>
+        <td class="leb-en-cell">"Waiting for the other party"<br><span class="tag tag-strong">Dedicated waiting screen with status</span></td>
+        <td class="leb-he-cell">"ממתינים לצד השני"</td>
+      </tr>
+
+      <tr class="highlight-leb">
+        <td class="label-cell">Both-submitted state</td>
+        <td class="bc-cell"><span class="empty">— Auto-triggers analysis immediately</span></td>
+        <td class="leb-en-cell">"Both parties have submitted! Ready to generate the empathic analysis." + "Generate Empathic Analysis" button<br><span class="tag tag-strong">Gives user agency over when to trigger</span></td>
+        <td class="leb-he-cell">"שני הצדדים הגישו! מוכן ליצור את הניתוח האמפתי." + "יצירת ניתוח אמפתי"</td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <!-- SUMMARY NOTE -->
+  <div class="note" style="margin-top:28px">
+    <strong>Summary for the merged product:</strong> BridgeClause wins on almost every piece of user-facing copy — the headlines are warmer, the field hints tell real stories, the loading messages create a narrative moment, and the personalisation with first names makes the output feel bespoke. Legal Empathy Bridge contributes two things worth keeping: its <strong>dedicated privacy banner component</strong> (more explicit and trust-building than BridgeClause's inline mention), and its <strong>waiting / session-status screens</strong> (which BridgeClause lacks because of its URL-based architecture). The combined product should adopt BridgeClause's voice and copy throughout, import LEB's privacy banner as a standalone component shown before each form submission, and introduce a proper waiting screen in the session flow. The Hebrew copy in LEB needs a full rewrite — it reads as machine-translated and lacks the warmth of the English original.
+  </div>
+
+</div>
+</body>
+</html>

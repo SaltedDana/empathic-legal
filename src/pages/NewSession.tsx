@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAutoSave } from "@/hooks/useAutoSave";
@@ -9,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { VoiceButton } from "@/components/VoiceButton";
 import { PrivacyBanner } from "@/components/PrivacyBanner";
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator";
-import { HeartHandshake, ArrowRight, Loader2 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface FormData {
@@ -32,6 +34,7 @@ const NewSession = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { data: formData, setData: setFormData, isSaving } = useAutoSave<FormData>("new-session-form", defaultForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<"context" | "fears">("context");
@@ -46,23 +49,21 @@ const NewSession = () => {
 
   const handleSubmit = async () => {
     if (!user) {
-      toast({ title: "Sign in required", description: "Please sign in to create a session.", variant: "destructive" });
+      toast({ title: t("newSession.signInRequired"), description: t("newSession.signInToCreate"), variant: "destructive" });
       navigate("/auth");
       return;
     }
 
     if (!formData.context.trim()) {
-      toast({ title: "Context required", description: "Please describe the agreement.", variant: "destructive" });
+      toast({ title: t("newSession.contextRequired"), description: t("newSession.pleaseDescribe"), variant: "destructive" });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Generate short code via DB function
       const { data: shortCode, error: codeError } = await supabase.rpc("generate_short_code");
       if (codeError) throw codeError;
 
-      // Create session
       const { data: session, error: sessionError } = await supabase
         .from("sessions")
         .insert({
@@ -76,7 +77,6 @@ const NewSession = () => {
 
       if (sessionError) throw sessionError;
 
-      // Create party A response
       const { error: responseError } = await supabase
         .from("party_responses")
         .insert({
@@ -92,13 +92,12 @@ const NewSession = () => {
 
       if (responseError) throw responseError;
 
-      // Clear auto-save
       localStorage.removeItem("new-session-form");
 
-      toast({ title: "Session created!", description: `Share code: ${shortCode}` });
+      toast({ title: t("newSession.sessionCreated"), description: t("newSession.shareCode", { code: shortCode }) });
       navigate(`/session/${session.id}`);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -108,11 +107,13 @@ const NewSession = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="font-serif text-2xl font-bold flex items-center gap-2 text-primary">
-            <HeartHandshake className="h-6 w-6" />
-            Legal Empathy Bridge
+          <Link to="/" className="flex items-center">
+            <img src="/logo-empathic-legal.png" alt={t("common.appName")} className="h-10" />
           </Link>
-          <AutoSaveIndicator isSaving={isSaving} />
+          <div className="flex items-center gap-2">
+            <AutoSaveIndicator isSaving={isSaving} />
+            <LanguageSwitcher />
+          </div>
         </div>
       </header>
 
@@ -120,22 +121,21 @@ const NewSession = () => {
         {step === "context" ? (
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-serif">Describe the Agreement</CardTitle>
-              <CardDescription>
-                What kind of agreement is this? What are you trying to accomplish together?
-              </CardDescription>
+              <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground mb-1">{t("newSession.stepLabel")}</p>
+              <CardTitle className="text-2xl font-serif">{t("newSession.describeAgreement")}</CardTitle>
+              <CardDescription>{t("newSession.describeQuestion")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="relative">
                 <Textarea
-                  placeholder="For example: We're starting a business partnership and need to define roles, equity split, and exit terms..."
-                  className="min-h-[200px]"
+                  placeholder={t("newSession.contextPlaceholder")}
+                  className="min-h-[160px]"
                   value={formData.context}
                   onChange={(e) => updateField("context", e.target.value)}
                 />
                 <VoiceButton
                   onResult={(text) => appendToField("context", text)}
-                  className="absolute bottom-3 right-3"
+                  className="absolute bottom-3 end-3"
                 />
               </div>
               <Button
@@ -143,8 +143,8 @@ const NewSession = () => {
                 onClick={() => setStep("fears")}
                 disabled={!formData.context.trim()}
               >
-                Continue to Your Concerns
-                <ArrowRight className="ml-2 h-4 w-4" />
+                {t("newSession.continueToConcerns")}
+                <ArrowRight className="ms-2 h-4 w-4" />
               </Button>
             </CardContent>
           </Card>
@@ -154,64 +154,84 @@ const NewSession = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl font-serif">Your Concerns</CardTitle>
-                <CardDescription>What are you worried might go wrong?</CardDescription>
+                <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground mb-1">{t("newSession.step2Label")}</p>
+                <CardTitle className="text-2xl font-serif">{t("newSession.yourConcerns")}</CardTitle>
+                <CardDescription>{t("newSession.concernsSubtitle")}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="relative">
-                  <Textarea
-                    placeholder="What keeps you up at night about this agreement?"
-                    className="min-h-[120px]"
-                    value={formData.concerns}
-                    onChange={(e) => updateField("concerns", e.target.value)}
-                  />
-                  <VoiceButton onResult={(text) => appendToField("concerns", text)} className="absolute bottom-3 right-3" />
-                </div>
-                <div className="relative">
-                  <label className="text-sm font-medium mb-2 block">What do you want to protect yourself from?</label>
-                  <Textarea
-                    placeholder="Specific protections you want in this agreement..."
-                    className="min-h-[120px]"
-                    value={formData.protections}
-                    onChange={(e) => updateField("protections", e.target.value)}
-                  />
-                  <VoiceButton onResult={(text) => appendToField("protections", text)} className="absolute bottom-3 right-3" />
-                </div>
-              </CardContent>
-            </Card>
+              <CardContent className="space-y-6">
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-serif">Your Priorities</CardTitle>
-                <CardDescription>What matters most to you in this agreement?</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="relative">
-                  <Textarea
-                    placeholder="Your top priorities and non-negotiables..."
-                    className="min-h-[120px]"
-                    value={formData.priorities}
-                    onChange={(e) => updateField("priorities", e.target.value)}
-                  />
-                  <VoiceButton onResult={(text) => appendToField("priorities", text)} className="absolute bottom-3 right-3" />
+                {/* Worries */}
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold block">{t("newSession.concernsLabel")}</label>
+                  <p className="text-xs text-muted-foreground">{t("newSession.concernsHint")}</p>
+                  <div className="relative mt-1">
+                    <Textarea
+                      placeholder={t("newSession.concernsPlaceholder")}
+                      className="min-h-[110px]"
+                      value={formData.concerns}
+                      onChange={(e) => updateField("concerns", e.target.value)}
+                    />
+                    <VoiceButton onResult={(text) => appendToField("concerns", text)} className="absolute bottom-3 end-3" />
+                  </div>
                 </div>
-                <div className="relative">
-                  <label className="text-sm font-medium mb-2 block">What outcomes are you hoping for?</label>
-                  <Textarea
-                    placeholder="Your ideal outcomes from this agreement..."
-                    className="min-h-[120px]"
-                    value={formData.desired_outcomes}
-                    onChange={(e) => updateField("desired_outcomes", e.target.value)}
-                  />
-                  <VoiceButton onResult={(text) => appendToField("desired_outcomes", text)} className="absolute bottom-3 right-3" />
+
+                {/* Safety / protection */}
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold block">{t("newSession.protectLabel")}</label>
+                  <p className="text-xs text-muted-foreground">{t("newSession.protectHint")}</p>
+                  <div className="relative mt-1">
+                    <Textarea
+                      placeholder={t("newSession.protectionsPlaceholder")}
+                      className="min-h-[110px]"
+                      value={formData.protections}
+                      onChange={(e) => updateField("protections", e.target.value)}
+                    />
+                    <VoiceButton onResult={(text) => appendToField("protections", text)} className="absolute bottom-3 end-3" />
+                  </div>
                 </div>
+
+                {/* Ideal outcome */}
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold block">{t("newSession.outcomesLabel")}</label>
+                  <p className="text-xs text-muted-foreground">{t("newSession.outcomesHint")}</p>
+                  <div className="relative mt-1">
+                    <Textarea
+                      placeholder={t("newSession.outcomesPlaceholder")}
+                      className="min-h-[110px]"
+                      value={formData.desired_outcomes}
+                      onChange={(e) => updateField("desired_outcomes", e.target.value)}
+                    />
+                    <VoiceButton onResult={(text) => appendToField("desired_outcomes", text)} className="absolute bottom-3 end-3" />
+                  </div>
+                </div>
+
+                {/* Hesitation (optional) */}
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold block">
+                    {t("newSession.hesitationLabel")}
+                    <span className="text-xs font-normal text-muted-foreground ms-2">({t("common.optional")})</span>
+                  </label>
+                  <p className="text-xs text-muted-foreground">{t("newSession.hesitationHint")}</p>
+                  <div className="relative mt-1">
+                    <Textarea
+                      placeholder={t("newSession.hesitationPlaceholder")}
+                      className="min-h-[90px]"
+                      value={formData.priorities}
+                      onChange={(e) => updateField("priorities", e.target.value)}
+                    />
+                    <VoiceButton onResult={(text) => appendToField("priorities", text)} className="absolute bottom-3 end-3" />
+                  </div>
+                </div>
+
               </CardContent>
             </Card>
 
             <div className="flex gap-4">
-              <Button variant="outline" onClick={() => setStep("context")} className="flex-1">Back</Button>
+              <Button variant="outline" onClick={() => setStep("context")} className="flex-1">{t("common.back")}</Button>
               <Button onClick={handleSubmit} disabled={isSubmitting} className="flex-1">
-                {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Submit & Get Share Link"}
+                {isSubmitting
+                  ? <><Loader2 className="me-2 h-4 w-4 animate-spin" />{t("newSession.submitting")}</>
+                  : t("newSession.submitAndShare")}
               </Button>
             </div>
           </div>

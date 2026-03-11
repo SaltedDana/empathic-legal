@@ -1,16 +1,18 @@
 import { Mic, MicOff } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 
-export const VoiceButton = ({ 
-  onResult, 
-  className 
-}: { 
+export const VoiceButton = ({
+  onResult,
+  className
+}: {
   onResult: (text: string) => void;
   className?: string;
 }) => {
   const { isListening, isSupported, toggleListening } = useSpeechToText(onResult);
+  const { t } = useTranslation();
 
   if (!isSupported) return null;
 
@@ -25,7 +27,7 @@ export const VoiceButton = ({
         className
       )}
       onClick={toggleListening}
-      title={isListening ? "Stop listening" : "Start voice input"}
+      title={isListening ? t("voice.stopListening") : t("voice.startInput")}
     >
       {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
     </Button>

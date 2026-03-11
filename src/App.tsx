@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 import { AuthProvider } from "./contexts/AuthContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import Auth from "./pages/Auth";
 import NewSession from "./pages/NewSession";
 import JoinSession from "./pages/JoinSession";
@@ -16,6 +17,7 @@ import SessionView from "./pages/SessionView";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <LanguageProvider>
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
@@ -33,6 +35,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 

@@ -1,21 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { HeartHandshake, Copy, Loader2, Scale, Lightbulb, Check } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { Copy, Loader2, Scale, Lightbulb, Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const SessionView = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [session, setSession] = useState<any>(null);
   const [analysis, setAnalysis] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
+  const loadingTickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const LOADING_MSG_COUNT = 6;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,7 +37,6 @@ const SessionView = () => {
       if (sessionData) {
         setSession(sessionData);
 
-        // Check for existing analysis
         const { data: analysisData } = await supabase
           .from("ai_analyses")
           .select("*")
@@ -49,6 +55,11 @@ const SessionView = () => {
   const triggerAnalysis = async () => {
     if (!id) return;
     setIsAnalyzing(true);
+    setLoadingMsgIdx(0);
+    loadingTickRef.current = setInterval(() => {
+      setLoadingMsgIdx(prev => (prev + 1) % LOADING_MSG_COUNT);
+    }, 1900);
+
     try {
       const { data, error } = await supabase.functions.invoke("analyze-session", {
         body: { session_id: id },
@@ -57,10 +68,11 @@ const SessionView = () => {
       if (error) throw error;
       setAnalysis(data);
       setSession((prev: any) => ({ ...prev, status: "analyzed" }));
-      toast({ title: "Analysis complete!", description: "The empathic summary is ready." });
+      toast({ title: t("sessionView.analysisComplete"), description: t("sessionView.summaryReady") });
     } catch (error: any) {
-      toast({ title: "Analysis failed", description: error.message, variant: "destructive" });
+      toast({ title: t("sessionView.analysisFailed"), description: error.message, variant: "destructive" });
     } finally {
+      if (loadingTickRef.current) clearInterval(loadingTickRef.current);
       setIsAnalyzing(false);
     }
   };
@@ -71,7 +83,7 @@ const SessionView = () => {
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast({ title: "Link copied!", description: link });
+    toast({ title: t("sessionView.linkCopied"), description: link });
   };
 
   if (isLoading) {
@@ -89,11 +101,11 @@ const SessionView = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container mx-auto px-4 h-16 flex items-center">
-          <Link to="/" className="font-serif text-2xl font-bold flex items-center gap-2 text-primary">
-            <HeartHandshake className="h-6 w-6" />
-            Legal Empathy Bridge
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center">
+            <img src="/logo-empathic-legal.png" alt={t("common.appName")} className="h-10" />
           </Link>
+          <LanguageSwitcher />
         </div>
       </header>
 
@@ -102,23 +114,19 @@ const SessionView = () => {
         {isWaiting && (
           <Card className="text-center">
             <CardHeader>
-              <CardTitle className="text-2xl font-serif">Waiting for the other party</CardTitle>
-              <CardDescription>
-                Share this link with the other party so they can submit their perspective.
-              </CardDescription>
+              <CardTitle className="text-2xl font-serif">{t("sessionView.waitingTitle")}</CardTitle>
+              <CardDescription>{t("sessionView.waitingDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-secondary rounded-lg p-4 flex items-center justify-between gap-2">
-                <code className="text-sm font-mono flex-1 text-left truncate">
+                <code className="text-sm font-mono flex-1 text-start truncate">
                   {window.location.origin}/s/{session?.short_code}
                 </code>
                 <Button variant="outline" size="sm" onClick={copyShareLink}>
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
-                You'll be able to view the AI analysis once both parties have submitted.
-              </p>
+              <p className="text-sm text-muted-foreground">{t("sessionView.waitingNote")}</p>
             </CardContent>
           </Card>
         )}
@@ -127,17 +135,22 @@ const SessionView = () => {
         {isBothSubmitted && !analysis && (
           <Card className="text-center">
             <CardHeader>
-              <CardTitle className="text-2xl font-serif">Both parties have submitted!</CardTitle>
-              <CardDescription>Ready to generate the empathic analysis.</CardDescription>
+              <CardTitle className="text-2xl font-serif">{t("sessionView.bothSubmittedTitle")}</CardTitle>
+              <CardDescription>{t("sessionView.bothSubmittedDesc")}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button onClick={triggerAnalysis} disabled={isAnalyzing} size="lg">
+            <CardContent className="space-y-4">
+              <Button onClick={triggerAnalysis} disabled={isAnalyzing} size="lg" className="px-10">
                 {isAnalyzing ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Analyzing...</>
+                  <><Loader2 className="me-2 h-4 w-4 animate-spin" />{t("sessionView.analyzing")}</>
                 ) : (
-                  "Generate Empathic Analysis"
+                  t("sessionView.generateAnalysis")
                 )}
               </Button>
+              {isAnalyzing && (
+                <p className="text-sm text-muted-foreground animate-pulse">
+                  {t(`sessionView.loadingMsg${loadingMsgIdx}`)}
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
@@ -146,17 +159,15 @@ const SessionView = () => {
         {isAnalyzed && (
           <>
             <div className="text-center space-y-2 mb-8">
-              <h1 className="text-3xl font-serif font-bold">Empathic Analysis</h1>
-              <p className="text-muted-foreground text-sm">
-                This summary represents both perspectives in neutral language. Your specific words remain private.
-              </p>
+              <h1 className="text-3xl font-serif font-bold">{t("sessionView.empathicAnalysisTitle")}</h1>
+              <p className="text-muted-foreground text-sm">{t("sessionView.analysisDescription")}</p>
             </div>
 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl font-serif">
                   <HeartHandshake className="h-5 w-5 text-primary" />
-                  Empathic Summary
+                  {t("sessionView.empathicSummary")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -169,13 +180,13 @@ const SessionView = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl font-serif">
                     <Scale className="h-5 w-5 text-primary" />
-                    Relevant Legal Concepts
+                    {t("sessionView.legalConcepts")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {(analysis.legal_concepts as any[]).map((concept: any, i: number) => (
-                      <div key={i} className="border-l-2 border-primary/30 pl-4">
+                      <div key={i} className="border-s-2 border-primary/30 ps-4">
                         <h4 className="font-semibold">{concept.concept}</h4>
                         <p className="text-muted-foreground text-sm mt-1">{concept.explanation}</p>
                       </div>
@@ -190,7 +201,7 @@ const SessionView = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl font-serif">
                     <Lightbulb className="h-5 w-5 text-primary" />
-                    Bridge Building Suggestions
+                    {t("sessionView.bridgeSuggestions")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -208,12 +219,17 @@ const SessionView = () => {
               </Card>
             )}
 
+            {/* Next step guidance */}
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-900">
+              <strong>Next step: </strong>{t("sessionView.nextStep")}
+            </div>
+
             <div className="flex gap-4">
               <Button variant="outline" className="flex-1" asChild>
-                <Link to="/new">Start New Agreement</Link>
+                <Link to="/new">{t("sessionView.startNewAgreement")}</Link>
               </Button>
               <Button variant="outline" className="flex-1" asChild>
-                <Link to="/">Home</Link>
+                <Link to="/">{t("common.home")}</Link>
               </Button>
             </div>
           </>

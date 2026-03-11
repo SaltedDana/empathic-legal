@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAutoSave } from "@/hooks/useAutoSave";
@@ -9,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { VoiceButton } from "@/components/VoiceButton";
 import { PrivacyBanner } from "@/components/PrivacyBanner";
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator";
-import { HeartHandshake, Loader2 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { Loader2, Shield, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ResponseForm {
@@ -31,10 +33,13 @@ const JoinSession = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { data: formData, setData: setFormData, isSaving } = useAutoSave<ResponseForm>(`join-session-${code}`, defaultForm);
   const [session, setSession] = useState<any>(null);
+  const [inviterName, setInviterName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [joinStep, setJoinStep] = useState<"welcome" | "context" | "fears">("welcome");
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -46,15 +51,26 @@ const JoinSession = () => {
         .single();
 
       if (error || !data) {
-        toast({ title: "Session not found", description: "This link may be invalid.", variant: "destructive" });
+        toast({ title: t("joinSession.sessionNotFound"), description: t("joinSession.linkMayBeInvalid"), variant: "destructive" });
         navigate("/");
         return;
       }
       setSession(data);
+
+      // Try to fetch the inviter's display name
+      if (data.creator_user_id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", data.creator_user_id)
+          .single();
+        if (profile?.display_name) setInviterName(profile.display_name);
+      }
+
       setIsLoading(false);
     };
     fetchSession();
-  }, [code, navigate, toast]);
+  }, [code, navigate, toast, t]);
 
   const updateField = (field: keyof ResponseForm, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -66,7 +82,7 @@ const JoinSession = () => {
 
   const handleSubmit = async () => {
     if (!user) {
-      toast({ title: "Sign in required", description: "Please sign in to submit your response.", variant: "destructive" });
+      toast({ title: t("joinSession.signInRequired"), description: t("joinSession.signInToSubmit"), variant: "destructive" });
       navigate("/auth");
       return;
     }
@@ -90,17 +106,16 @@ const JoinSession = () => {
 
       if (responseError) throw responseError;
 
-      // Update session status
       await supabase
         .from("sessions")
         .update({ status: "both_submitted" })
         .eq("id", session.id);
 
       localStorage.removeItem(`join-session-${code}`);
-      toast({ title: "Submitted!", description: "Both parties have now submitted. Generating analysis..." });
+      toast({ title: t("joinSession.submitted"), description: t("joinSession.bothSubmitted") });
       navigate(`/session/${session.id}`);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -114,90 +129,181 @@ const JoinSession = () => {
     );
   }
 
+  const welcomeTitle = inviterName
+    ? t("joinSession.welcomeTitle", { name: inviterName })
+    : t("joinSession.welcomeTitleFallback");
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="font-serif text-2xl font-bold flex items-center gap-2 text-primary">
-            <HeartHandshake className="h-6 w-6" />
-            Legal Empathy Bridge
+          <Link to="/" className="flex items-center">
+            <img src="/logo-empathic-legal.png" alt={t("common.appName")} className="h-10" />
           </Link>
-          <AutoSaveIndicator isSaving={isSaving} />
+          <div className="flex items-center gap-2">
+            <AutoSaveIndicator isSaving={isSaving} />
+            <LanguageSwitcher />
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-2xl space-y-6">
-        <Card className="bg-secondary/30">
-          <CardHeader>
-            <CardTitle className="text-xl font-serif">Agreement Context</CardTitle>
-            <CardDescription>The other party described this agreement as:</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-foreground whitespace-pre-wrap">{session?.context}</p>
-          </CardContent>
-        </Card>
 
-        <PrivacyBanner />
+        {/* ── Welcome screen ── */}
+        {joinStep === "welcome" && (
+          <Card>
+            <CardContent className="pt-8 pb-8 space-y-6 text-center">
+              <div className="text-5xl">🤝</div>
+              <div className="space-y-2">
+                <h1 className="text-2xl font-serif font-bold">{welcomeTitle}</h1>
+                <p className="text-muted-foreground max-w-md mx-auto">{t("joinSession.welcomeSubtitle")}</p>
+              </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl font-serif">Your Concerns</CardTitle>
-            <CardDescription>What are you worried might go wrong?</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="relative">
-              <Textarea
-                placeholder="What keeps you up at night about this agreement?"
-                className="min-h-[120px]"
-                value={formData.concerns}
-                onChange={(e) => updateField("concerns", e.target.value)}
-              />
-              <VoiceButton onResult={(text) => appendToField("concerns", text)} className="absolute bottom-3 right-3" />
-            </div>
-            <div className="relative">
-              <label className="text-sm font-medium mb-2 block">What do you want to protect yourself from?</label>
-              <Textarea
-                placeholder="Specific protections you want..."
-                className="min-h-[120px]"
-                value={formData.protections}
-                onChange={(e) => updateField("protections", e.target.value)}
-              />
-              <VoiceButton onResult={(text) => appendToField("protections", text)} className="absolute bottom-3 right-3" />
-            </div>
-          </CardContent>
-        </Card>
+              <div className="text-start space-y-3 max-w-sm mx-auto">
+                <div className="flex items-start gap-3">
+                  <Shield className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold">{t("joinSession.welcomeFeature1Title")}</p>
+                    <p className="text-xs text-muted-foreground">{t("joinSession.welcomeFeature1Desc")}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Clock className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold">{t("joinSession.welcomeFeature2Title")}</p>
+                    <p className="text-xs text-muted-foreground">{t("joinSession.welcomeFeature2Desc")}</p>
+                  </div>
+                </div>
+              </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl font-serif">Your Priorities</CardTitle>
-            <CardDescription>What matters most to you?</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="relative">
-              <Textarea
-                placeholder="Your top priorities and non-negotiables..."
-                className="min-h-[120px]"
-                value={formData.priorities}
-                onChange={(e) => updateField("priorities", e.target.value)}
-              />
-              <VoiceButton onResult={(text) => appendToField("priorities", text)} className="absolute bottom-3 right-3" />
-            </div>
-            <div className="relative">
-              <label className="text-sm font-medium mb-2 block">What outcomes are you hoping for?</label>
-              <Textarea
-                placeholder="Your ideal outcomes..."
-                className="min-h-[120px]"
-                value={formData.desired_outcomes}
-                onChange={(e) => updateField("desired_outcomes", e.target.value)}
-              />
-              <VoiceButton onResult={(text) => appendToField("desired_outcomes", text)} className="absolute bottom-3 right-3" />
-            </div>
-          </CardContent>
-        </Card>
+              <Button size="lg" className="w-full sm:w-auto px-10" onClick={() => setJoinStep("context")}>
+                {t("joinSession.welcomeCta")}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-        <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full h-12 text-lg">
-          {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Submit My Response"}
-        </Button>
+        {/* ── Step 1: Agreement context ── */}
+        {joinStep === "context" && (
+          <Card>
+            <CardHeader>
+              <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground mb-1">{t("joinSession.stepLabel")}</p>
+              <CardTitle className="text-2xl font-serif">{t("joinSession.yourSideTitle")}</CardTitle>
+              <CardDescription>{t("joinSession.yourSideSubtitle")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-secondary/30 rounded-lg p-4">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">{t("joinSession.agreementContext")}</p>
+                <p className="text-sm whitespace-pre-wrap">{session?.context}</p>
+              </div>
+              <p className="text-xs text-muted-foreground">{t("joinSession.otherPartyDescribed")}</p>
+              <div className="relative">
+                <Textarea
+                  placeholder={t("joinSession.concernsPlaceholder")}
+                  className="min-h-[120px]"
+                  value={formData.concerns}
+                  onChange={(e) => updateField("concerns", e.target.value)}
+                />
+                <VoiceButton onResult={(text) => appendToField("concerns", text)} className="absolute bottom-3 end-3" />
+              </div>
+              <div className="flex gap-4 pt-2">
+                <Button variant="outline" onClick={() => setJoinStep("welcome")} className="flex-1">{t("common.back")}</Button>
+                <Button className="flex-1" onClick={() => setJoinStep("fears")} disabled={!formData.concerns.trim()}>
+                  {t("joinSession.welcomeCta")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── Step 2: Private feelings ── */}
+        {joinStep === "fears" && (
+          <>
+            <PrivacyBanner />
+
+            <Card>
+              <CardHeader>
+                <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground mb-1">{t("joinSession.step2Label")}</p>
+                <CardTitle className="text-2xl font-serif">{t("joinSession.yourConcerns")}</CardTitle>
+                <CardDescription>{t("joinSession.concernsSubtitle")}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+
+                {/* Worries */}
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold block">{t("joinSession.concernsLabel")}</label>
+                  <p className="text-xs text-muted-foreground">{t("joinSession.concernsHint")}</p>
+                  <div className="relative mt-1">
+                    <Textarea
+                      placeholder={t("joinSession.concernsPlaceholder")}
+                      className="min-h-[110px]"
+                      value={formData.protections}
+                      onChange={(e) => updateField("protections", e.target.value)}
+                    />
+                    <VoiceButton onResult={(text) => appendToField("protections", text)} className="absolute bottom-3 end-3" />
+                  </div>
+                </div>
+
+                {/* Safety */}
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold block">{t("joinSession.protectLabel")}</label>
+                  <div className="relative mt-1">
+                    <Textarea
+                      placeholder={t("joinSession.protectionsPlaceholder")}
+                      className="min-h-[110px]"
+                      value={formData.desired_outcomes}
+                      onChange={(e) => updateField("desired_outcomes", e.target.value)}
+                    />
+                    <VoiceButton onResult={(text) => appendToField("desired_outcomes", text)} className="absolute bottom-3 end-3" />
+                  </div>
+                </div>
+
+                {/* Ideal outcome */}
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold block">{t("joinSession.outcomesLabel")}</label>
+                  <div className="relative mt-1">
+                    <Textarea
+                      placeholder={t("joinSession.outcomesPlaceholder")}
+                      className="min-h-[110px]"
+                      value={formData.priorities}
+                      onChange={(e) => updateField("priorities", e.target.value)}
+                    />
+                    <VoiceButton onResult={(text) => appendToField("priorities", text)} className="absolute bottom-3 end-3" />
+                  </div>
+                </div>
+
+                {/* Hesitation (optional) */}
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold block">
+                    {t("joinSession.hesitationLabel")}
+                    <span className="text-xs font-normal text-muted-foreground ms-2">({t("common.optional")})</span>
+                  </label>
+                  <p className="text-xs text-muted-foreground">{t("joinSession.hesitationHint")}</p>
+                  <div className="relative mt-1">
+                    <Textarea
+                      placeholder={t("joinSession.hesitationPlaceholder")}
+                      className="min-h-[90px]"
+                      value={formData.concerns}
+                      onChange={(e) => updateField("concerns", e.target.value)}
+                    />
+                    <VoiceButton onResult={(text) => appendToField("concerns", text)} className="absolute bottom-3 end-3" />
+                  </div>
+                </div>
+
+              </CardContent>
+            </Card>
+
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={() => setJoinStep("context")} className="flex-1">{t("common.back")}</Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 h-12 text-base">
+                {isSubmitting
+                  ? <><Loader2 className="me-2 h-4 w-4 animate-spin" />{t("joinSession.submitting")}</>
+                  : t("joinSession.submitResponse")}
+              </Button>
+            </div>
+          </>
+        )}
+
       </main>
     </div>
   );
