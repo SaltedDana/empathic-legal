@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { HeartHandshake, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
+import { Star } from "@/components/Star";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -55,8 +56,8 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="font-serif text-2xl font-bold flex items-center gap-2 text-primary">
-            <HeartHandshake className="h-6 w-6" />
+          <Link to="/" className="font-serif text-xl flex items-center gap-2 text-foreground">
+            <Star size={14} className="text-primary" />
             {t("common.appName")}
           </Link>
           <LanguageSwitcher />

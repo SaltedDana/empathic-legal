@@ -1,9 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Lock, Heart, Scale } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { Star, StarDivider } from "@/components/Star";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -11,12 +10,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b">
+      <header className="border-b border-border/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center">
-            <img src="/logo-empathic-legal.png" alt={t("common.appName")} className="h-10" />
-          </div>
+          <img src="/logo-empathic-legal.png" alt={t("common.appName")} className="h-10" />
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
             <Button variant="ghost" asChild>
@@ -26,55 +22,54 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero */}
-      <main className="container mx-auto px-4 py-16 md:py-24 max-w-5xl">
-        <div className="text-center max-w-3xl mx-auto space-y-6 mb-16">
-          <div className="text-6xl mb-2">🤝</div>
-          <h1 className="text-5xl md:text-6xl font-serif font-bold text-foreground tracking-tight">
-            {t("index.heroTitle")}<br />
-            <span className="text-amber-600">{t("index.heroTitleSuffix")}</span>
+      <main className="container mx-auto px-4 py-24 md:py-32 max-w-[560px] animate-calm-in">
+        <div className="text-center space-y-8">
+          <Star size={20} className="text-primary mx-auto" />
+
+          <h1 className="font-serif text-[32px] md:text-[36px] leading-[1.25] text-foreground">
+            {t("index.heroTitle")}{" "}
+            <span className="text-primary">{t("index.heroTitleSuffix")}</span>
           </h1>
-          <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+
+          <p className="text-base text-muted-foreground max-w-md mx-auto">
             {t("index.heroDescription")}
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-            <Button size="lg" className="w-full sm:w-auto text-lg h-14 px-8" onClick={() => navigate("/new")}>
+
+          <div className="pt-4 flex flex-col items-center gap-4">
+            <Button
+              size="lg"
+              className="px-8 h-12 text-base rounded-xl"
+              onClick={() => navigate("/new")}
+            >
               {t("index.startNewAgreement")}
             </Button>
+            <Link
+              to="/auth"
+              className="text-sm text-ink-soft hover:text-primary hover:underline underline-offset-4 transition"
+            >
+              {t("common.signIn")}
+            </Link>
           </div>
         </div>
 
-        {/* How it works */}
-        <div className="grid md:grid-cols-3 gap-8 mt-24">
-          <Card className="border-none shadow-md bg-secondary/50">
-            <CardContent className="pt-6 text-center space-y-4">
-              <div className="mx-auto bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center">
-                <Lock className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg">{t("index.step1Title")}</h3>
-              <p className="text-muted-foreground">{t("index.step1Desc")}</p>
-            </CardContent>
-          </Card>
+        <StarDivider />
 
-          <Card className="border-none shadow-md bg-secondary/50">
-            <CardContent className="pt-6 text-center space-y-4">
-              <div className="mx-auto bg-amber-100 w-12 h-12 rounded-full flex items-center justify-center">
-                <Heart className="h-6 w-6 text-amber-600" />
-              </div>
-              <h3 className="font-semibold text-lg">{t("index.step2Title")}</h3>
-              <p className="text-muted-foreground">{t("index.step2Desc")}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-md bg-secondary/50">
-            <CardContent className="pt-6 text-center space-y-4">
-              <div className="mx-auto bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center">
-                <Scale className="h-6 w-6 text-blue-600" />
-              </div>
-              <h3 className="font-semibold text-lg">{t("index.step3Title")}</h3>
-              <p className="text-muted-foreground">{t("index.step3Desc")}</p>
-            </CardContent>
-          </Card>
+        <div className="space-y-8 text-center max-w-md mx-auto">
+          <div>
+            <p className="label-eyebrow mb-2">01</p>
+            <h3 className="font-serif text-xl mb-1">{t("index.step1Title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("index.step1Desc")}</p>
+          </div>
+          <div>
+            <p className="label-eyebrow mb-2">02</p>
+            <h3 className="font-serif text-xl mb-1">{t("index.step2Title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("index.step2Desc")}</p>
+          </div>
+          <div>
+            <p className="label-eyebrow mb-2">03</p>
+            <h3 className="font-serif text-xl mb-1">{t("index.step3Title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("index.step3Desc")}</p>
+          </div>
         </div>
       </main>
     </div>

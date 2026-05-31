@@ -14,8 +14,14 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Heebo", "sans-serif"],
-        serif: ["Heebo", "sans-serif"],
+        sans: ["Heebo", "system-ui", "sans-serif"],
+        serif: ['"Frank Ruhl Libre"', "Heebo", "Georgia", "serif"],
+      },
+      transitionTimingFunction: {
+        calm: "cubic-bezier(0.32, 0.72, 0, 1)",
+      },
+      transitionDuration: {
+        DEFAULT: "400ms",
       },
       colors: {
         border: "hsl(var(--border))",

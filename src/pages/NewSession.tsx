@@ -117,7 +117,7 @@ const NewSession = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
+      <main className="container mx-auto px-4 py-12 max-w-[560px] animate-calm-in">
         {step === "context" ? (
           <Card>
             <CardHeader>

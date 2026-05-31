@@ -4,16 +4,16 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { Copy, Loader2, Scale, Lightbulb, Check } from "lucide-react";
+import { Star, StarDivider } from "@/components/Star";
+import { Copy, Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const SessionView = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [session, setSession] = useState<any>(null);
   const [analysis, setAnalysis] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,7 +89,7 @@ const SessionView = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Star size={24} className="text-primary" spinning />
       </div>
     );
   }
@@ -98,9 +98,14 @@ const SessionView = () => {
   const isBothSubmitted = session?.status === "both_submitted";
   const isAnalyzed = session?.status === "analyzed" && analysis;
 
+  const locale = i18n.language === "he" ? "he-IL" : "en-GB";
+  const createdAt = analysis?.created_at
+    ? new Date(analysis.created_at).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })
+    : "";
+
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
+      <header className="border-b border-border/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center">
             <img src="/logo-empathic-legal.png" alt={t("common.appName")} className="h-10" />
@@ -109,130 +114,131 @@ const SessionView = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
-        {/* Waiting state */}
+      <main className="container mx-auto px-4 py-12 max-w-[720px] animate-calm-in">
+        {/* ─────────── Waiting state ─────────── */}
         {isWaiting && (
-          <Card className="text-center">
-            <CardHeader>
-              <CardTitle className="text-2xl font-serif">{t("sessionView.waitingTitle")}</CardTitle>
-              <CardDescription>{t("sessionView.waitingDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-secondary rounded-lg p-4 flex items-center justify-between gap-2">
-                <code className="text-sm font-mono flex-1 text-start truncate">
-                  {window.location.origin}/s/{session?.short_code}
+          <div className="text-center space-y-8 py-8">
+            <Star size={20} className="text-primary mx-auto" spinning />
+            <div className="space-y-3">
+              <h1 className="font-serif text-[28px]">{t("sessionView.waitingTitle")}</h1>
+              <p className="text-muted-foreground max-w-md mx-auto">{t("sessionView.waitingDescription")}</p>
+            </div>
+
+            <div className="max-w-md mx-auto space-y-3">
+              <p className="label-eyebrow">{t("sessionView.linkCopied") /* short code label */}</p>
+              <div className="bg-card border border-border rounded-xl p-4 flex items-center justify-between gap-3">
+                <code className="font-serif text-2xl tracking-wider text-foreground flex-1 text-start">
+                  {session?.short_code}
                 </code>
-                <Button variant="outline" size="sm" onClick={copyShareLink}>
+                <Button variant="outline" size="sm" onClick={copyShareLink} className="rounded-lg">
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground">{t("sessionView.waitingNote")}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Both submitted - trigger analysis */}
-        {isBothSubmitted && !analysis && (
-          <Card className="text-center">
-            <CardHeader>
-              <CardTitle className="text-2xl font-serif">{t("sessionView.bothSubmittedTitle")}</CardTitle>
-              <CardDescription>{t("sessionView.bothSubmittedDesc")}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button onClick={triggerAnalysis} disabled={isAnalyzing} size="lg" className="px-10">
-                {isAnalyzing ? (
-                  <><Loader2 className="me-2 h-4 w-4 animate-spin" />{t("sessionView.analyzing")}</>
-                ) : (
-                  t("sessionView.generateAnalysis")
-                )}
-              </Button>
-              {isAnalyzing && (
-                <p className="text-sm text-muted-foreground animate-pulse">
-                  {t(`sessionView.loadingMsg${loadingMsgIdx}`)}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Results */}
-        {isAnalyzed && (
-          <>
-            <div className="text-center space-y-2 mb-8">
-              <h1 className="text-3xl font-serif font-bold">{t("sessionView.empathicAnalysisTitle")}</h1>
-              <p className="text-muted-foreground text-sm">{t("sessionView.analysisDescription")}</p>
+              <p className="text-xs text-ink-soft text-start break-all">
+                {window.location.origin}/s/{session?.short_code}
+              </p>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl font-serif">
-                  <HeartHandshake className="h-5 w-5 text-primary" />
-                  {t("sessionView.empathicSummary")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-foreground leading-relaxed whitespace-pre-wrap">{analysis.empathic_summary}</p>
-              </CardContent>
-            </Card>
+            <p className="text-sm text-ink-soft max-w-md mx-auto">{t("sessionView.waitingNote")}</p>
+          </div>
+        )}
+
+        {/* ─────────── Both submitted — trigger analysis ─────────── */}
+        {isBothSubmitted && !analysis && (
+          <div className="text-center space-y-8 py-8">
+            {isAnalyzing ? (
+              <>
+                <Star size={20} className="text-primary mx-auto" spinning />
+                <h1 className="font-serif text-[28px] max-w-md mx-auto">
+                  {t("sessionView.analyzing")}
+                </h1>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  {t(`sessionView.loadingMsg${loadingMsgIdx}`)}
+                </p>
+              </>
+            ) : (
+              <>
+                <Star size={20} className="text-primary mx-auto" />
+                <div className="space-y-3">
+                  <h1 className="font-serif text-[28px]">{t("sessionView.bothSubmittedTitle")}</h1>
+                  <p className="text-muted-foreground max-w-md mx-auto">{t("sessionView.bothSubmittedDesc")}</p>
+                </div>
+                <Button onClick={triggerAnalysis} size="lg" className="px-8 h-12 rounded-xl">
+                  {t("sessionView.generateAnalysis")}
+                </Button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ─────────── Results — printed letter ─────────── */}
+        {isAnalyzed && (
+          <article className="space-y-2">
+            {/* Header — letterhead */}
+            <header className="text-center pb-2">
+              <p className="label-eyebrow mb-2">{t("sessionView.empathicAnalysisTitle")}</p>
+              {createdAt && <p className="text-xs text-ink-soft">{createdAt}</p>}
+            </header>
+
+            <StarDivider className="my-8" />
+
+            {/* Common ground — the prose */}
+            <section className="space-y-4">
+              <h2 className="font-serif text-xl text-center">{t("sessionView.empathicSummary")}</h2>
+              <p className="font-serif text-[19px] leading-[1.75] text-foreground whitespace-pre-wrap">
+                {analysis.empathic_summary}
+              </p>
+            </section>
 
             {analysis.legal_concepts && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl font-serif">
-                    <Scale className="h-5 w-5 text-primary" />
-                    {t("sessionView.legalConcepts")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+              <>
+                <StarDivider />
+                <section className="space-y-6">
+                  <h2 className="font-serif text-xl text-center">{t("sessionView.legalConcepts")}</h2>
+                  <div className="space-y-5">
                     {(analysis.legal_concepts as any[]).map((concept: any, i: number) => (
-                      <div key={i} className="border-s-2 border-primary/30 ps-4">
-                        <h4 className="font-semibold">{concept.concept}</h4>
-                        <p className="text-muted-foreground text-sm mt-1">{concept.explanation}</p>
+                      <div key={i} className="bg-card border border-border rounded-xl p-5">
+                        <p className="label-eyebrow mb-2">{concept.concept}</p>
+                        <p className="text-sm leading-relaxed text-muted-foreground">{concept.explanation}</p>
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+                </section>
+              </>
             )}
 
             {analysis.bridge_suggestions && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl font-serif">
-                    <Lightbulb className="h-5 w-5 text-primary" />
-                    {t("sessionView.bridgeSuggestions")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
+              <>
+                <StarDivider />
+                <section className="space-y-6">
+                  <h2 className="font-serif text-xl text-center">{t("sessionView.bridgeSuggestions")}</h2>
+                  <div className="space-y-4">
                     {(analysis.bridge_suggestions as string[]).map((suggestion: string, i: number) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <span className="bg-primary/10 text-primary rounded-full w-6 h-6 flex items-center justify-center text-sm shrink-0">
-                          {i + 1}
-                        </span>
-                        <p className="text-foreground">{suggestion}</p>
-                      </li>
+                      <div key={i} className="bg-card border border-border rounded-xl p-5">
+                        <p className="font-serif text-[17px] leading-[1.65] text-foreground">{suggestion}</p>
+                      </div>
                     ))}
-                  </ul>
-                </CardContent>
-              </Card>
+                  </div>
+                </section>
+              </>
             )}
 
-            {/* Next step guidance */}
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-900">
-              <strong>Next step: </strong>{t("sessionView.nextStep")}
-            </div>
+            <StarDivider />
 
-            <div className="flex gap-4">
-              <Button variant="outline" className="flex-1" asChild>
-                <Link to="/new">{t("sessionView.startNewAgreement")}</Link>
-              </Button>
-              <Button variant="outline" className="flex-1" asChild>
-                <Link to="/">{t("common.home")}</Link>
-              </Button>
-            </div>
-          </>
+            <footer className="text-center space-y-6 pt-2">
+              <p className="text-sm text-ink-soft max-w-md mx-auto italic">
+                {t("sessionView.nextStep")}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                <Button variant="outline" className="rounded-xl" asChild>
+                  <Link to="/new">{t("sessionView.startNewAgreement")}</Link>
+                </Button>
+                <Button variant="ghost" className="rounded-xl" asChild>
+                  <Link to="/">{t("common.home")}</Link>
+                </Button>
+              </div>
+            </footer>
+          </article>
         )}
       </main>
     </div>

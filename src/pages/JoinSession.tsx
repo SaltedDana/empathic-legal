@@ -11,7 +11,8 @@ import { VoiceButton } from "@/components/VoiceButton";
 import { PrivacyBanner } from "@/components/PrivacyBanner";
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { Loader2, Shield, Clock } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Star } from "@/components/Star";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ResponseForm {
@@ -124,7 +125,7 @@ const JoinSession = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Star size={24} className="text-primary" spinning />
       </div>
     );
   }
@@ -147,30 +148,30 @@ const JoinSession = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl space-y-6">
+      <main className="container mx-auto px-4 py-12 max-w-[560px] space-y-8 animate-calm-in">
 
         {/* ── Welcome screen ── */}
         {joinStep === "welcome" && (
           <Card>
-            <CardContent className="pt-8 pb-8 space-y-6 text-center">
-              <div className="text-5xl">🤝</div>
-              <div className="space-y-2">
-                <h1 className="text-2xl font-serif font-bold">{welcomeTitle}</h1>
+            <CardContent className="pt-10 pb-10 space-y-8 text-center">
+              <Star size={20} className="text-primary mx-auto" />
+              <div className="space-y-3">
+                <h1 className="text-[28px] font-serif max-w-md mx-auto">{welcomeTitle}</h1>
                 <p className="text-muted-foreground max-w-md mx-auto">{t("joinSession.welcomeSubtitle")}</p>
               </div>
 
-              <div className="text-start space-y-3 max-w-sm mx-auto">
+              <div className="text-start space-y-4 max-w-sm mx-auto pt-2">
                 <div className="flex items-start gap-3">
-                  <Shield className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                  <Star size={10} className="text-ink-soft mt-2 shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold">{t("joinSession.welcomeFeature1Title")}</p>
+                    <p className="text-sm font-medium">{t("joinSession.welcomeFeature1Title")}</p>
                     <p className="text-xs text-muted-foreground">{t("joinSession.welcomeFeature1Desc")}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Clock className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                  <Star size={10} className="text-ink-soft mt-2 shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold">{t("joinSession.welcomeFeature2Title")}</p>
+                    <p className="text-sm font-medium">{t("joinSession.welcomeFeature2Title")}</p>
                     <p className="text-xs text-muted-foreground">{t("joinSession.welcomeFeature2Desc")}</p>
                   </div>
                 </div>
